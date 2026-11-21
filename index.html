@@ -1,0 +1,110 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0f1a"><title>Freedom – Take Back Control</title>
+<style>
+:root{--bg:#0b0f1a;--card:#141a2b;--fg:#eef2ff;--mut:#8b94b3;--acc:#5eead4;--sos:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#1b2a4a,var(--bg));background-attachment:fixed;color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+.wrap{max-width:720px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px 110px}
+.card{background:var(--card);border:1px solid #ffffff12;border-radius:20px;padding:20px;margin:14px 0}
+h1{font-size:1.6rem;margin:.2em 0}h2{font-size:.8rem;color:var(--mut);font-weight:600;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.08em}.card>h2:first-child{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.u{text-align:center;background:#ffffff08;border-radius:14px;padding:12px 4px}
+.u b{display:block;font-size:1.9rem;font-variant-numeric:tabular-nums}.u span{font-size:.7rem;color:var(--mut);text-transform:uppercase}
+.big{font-size:1.6rem;font-weight:700;color:var(--acc);margin:.2em 0}.mut{color:var(--mut)}
+button,input,select,textarea{font:inherit;border-radius:12px;border:1px solid #ffffff22;background:#ffffff0a;color:var(--fg);padding:12px 14px;width:100%;margin:6px 0}
+button{cursor:pointer;background:var(--acc);color:#04201c;border:0;font-weight:700}button.g{background:#ffffff12;color:var(--fg)}button:disabled{opacity:.4}
+.sos{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(320px,calc(100% - 36px));background:var(--sos);color:#2a0710;font-size:1.1rem;padding:16px;box-shadow:0 10px 30px #fb718555;z-index:9}
+.bar{height:8px;background:#ffffff14;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);transition:width .5s}
+.orb{width:180px;height:180px;margin:40px auto;border-radius:50%;background:radial-gradient(circle,var(--acc),#2dd4bf55);display:grid;place-items:center;color:#04201c;font-weight:800;font-size:1.2rem}
+.row{display:flex;gap:8px}.row button{margin:6px 0}
+.pop{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:20;animation:f .4s}.pop div{background:var(--card);padding:32px;border-radius:24px;text-align:center;animation:p .6s}
+@keyframes f{from{opacity:0}}@keyframes p{from{transform:scale(.6)}}
+@media(max-width:480px){.grid{grid-template-columns:repeat(3,1fr)}}
+[hidden]{display:none!important}
+</style></head><body><div id="app" class="wrap"></div><button id="sosb" class="sos" hidden>🆘 SOS – Ich habe Verlangen</button>
+<script>
+const $=s=>document.querySelector(s),DAY=864e5,KEY='af:v1';
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const UNIT={'Snus / Nikotinbeutel':'Dose','Rauchen':'Packung','Alkohol':'Getränk','Zucker':'Einkauf','Energy-Drinks':'Dose','Social Media':'Stunde','Glücksspiel':'Einsatz','Andere Gewohnheit':'Einheit'};
+const TIPS=['Trink ein Glas kaltes Wasser.','Kaue Kaugummi.','Geh 5 Minuten spazieren.','Putz dir die Zähne.','Atme tief durch – nutze die Atemübung.','Verlasse den Ort, wenn er ein Auslöser ist.','Erinnere dich, warum du aufgehört hast.','Beschäftige Mund und Hände: Zahnstocher, Nüsse, Strohhalm, Knetball.'];
+const MSGS=['Das Verlangen ist eine Welle – sie steigt, erreicht den Gipfel und fällt wieder.','Die stärkste Phase dauert meist nur wenige Minuten.','Trink jetzt ein Glas Wasser.','Steh auf und wechsle den Raum.','Atme 4 Sekunden ein, 6 Sekunden aus.','Du hast schon bewiesen, dass du durchhältst.','Gleich geschafft – bleib dran.'];
+const DAILY=['Jeder Tag ohne ist ein Sieg.','Du entscheidest, nicht das Verlangen.','Kleine Schritte zählen.','Ein Rückschlag löscht nicht deinen Fortschritt.','Heute für dein zukünftiges Ich.'];
+const HEALTH=[[24,'Nach ca. 1 Tag: Der Körper beginnt, sich von akuten Nikotinwirkungen zu erholen; Unruhe und Reizbarkeit können auftreten.','Erfahrung/Entzug – individuell'],[72,'Nach 2–3 Tagen: Entzugssymptome sind meist am stärksten (Verlangen, Gereiztheit, Schlafprobleme).','Belegt für Rauchstopp (u. a. CDC, DKFZ); für Nikotinbeutel vermutlich übertragbar'],[720,'Nach Wochen: Körperliche Entzugssymptome klingen bei vielen deutlich ab; Gewohnheiten und Auslöser bleiben die Hauptherausforderung.','Belegt für Rauchstopp; individuell verschieden'],[8760,'Nach Monaten bis Jahren: Langfristig sinken Gesundheitsrisiken, z. B. für Herz-Kreislauf-Erkrankungen – belegt für den Rauchstopp (WHO, DKFZ).','Belegt für Rauchstopp; für Nikotinbeutel weniger Daten']];
+const MS=[1,24,72,168,336,720,1440,2160,4320,8760];
+const msLabel=h=>h<24?h+' Stunde':h/24+' Tage';
+let S=null;try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
+const save=()=>{try{S?localStorage.setItem(KEY,JSON.stringify(S)):localStorage.removeItem(KEY)}catch{}};
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+let T=[];const clear=()=>{T.forEach(t=>{clearInterval(t);clearTimeout(t)});T=[]};
+const every=(f,ms)=>{f();T.push(setInterval(f,ms))};
+// --- Kernlogik: Zeit wird immer aus dem Startzeitstempel berechnet ---
+function addM(d,m){const r=new Date(d),day=r.getDate();r.setDate(1);r.setMonth(r.getMonth()+m);const dim=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(day,dim));return r}
+function brk(s,n){s=new Date(s);n=new Date(Math.max(n,+s));let m=(n.getFullYear()-s.getFullYear())*12+n.getMonth()-s.getMonth();if(addM(s,m)>n)m--;m=Math.max(0,m);let r=n-addM(s,m);const d=Math.floor(r/DAY);r-=d*DAY;return{Jahre:Math.floor(m/12),Monate:m%12,Wochen:Math.floor(d/7),Tage:d%7,Std:Math.floor(r/36e5),Min:Math.floor(r%36e5/6e4),Sek:Math.floor(r%6e4/1e3)}}
+const wd=(s,n)=>Math.floor(Math.max(0,n-s)/DAY);
+function sav(s,n){const per=S.price*S.units,el=Math.max(0,n-s),mid=new Date(n);mid.setHours(0,0,0,0);const f=ms=>Math.min(el,ms)/DAY*per;return{today:f(n-mid),week:f(7*DAY),month:f(30*DAY),total:f(el),year:per*365}}
+function ms(s,n){const h=Math.max(0,n-s)/36e5,reached=MS.filter(x=>h>=x),next=MS.find(x=>h<x)||null,prev=reached.length?reached[reached.length-1]:0;return{reached,next,p:next?(h-prev)/(next-prev):1}}
+// --- Navigation ---
+function show(v){clear();$('#sosb').hidden=!S||v==='sos';({onb:onboarding,home,sos,health,settings})[v]()}
+$('#sosb').onclick=()=>show('sos');
+const A=$('#app');
+function onboarding(){
+ const d=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);
+ A.innerHTML=`<h1>Freedom – Take Back Control</h1><p class="mut">Alle Daten bleiben auf deinem Gerät. Kein Konto, kein Tracking.</p><div class="card">
+ <h2>Was willst du hinter dir lassen?</h2><select id="h">${Object.keys(UNIT).map(h=>`<option>${h}</option>`).join('')}</select>
+ <h2>Aufhördatum &amp; Uhrzeit</h2><input id="d" type="datetime-local" value="${d}" max="${d}">
+ <h2 id="pl">Preis pro Dose (€)</h2><input id="p" inputmode="decimal" value="6">
+ <h2 id="ul">Verbrauch pro Tag (Dose)</h2><input id="u" inputmode="decimal" value="1">
+ <h2>Meine Gründe (einer pro Zeile)</h2><textarea id="r" rows="4">Ich will wieder die Kontrolle haben.\nIch will unabhängig sein.</textarea>
+ <button id="go">Los geht's</button><p id="err" class="mut"></p></div>`;
+ $('#h').onchange=e=>{const u=UNIT[e.target.value];$('#pl').textContent=`Preis pro ${u} (€)`;$('#ul').textContent=`Verbrauch pro Tag (${u})`};
+ $('#go').onclick=()=>{const t=new Date($('#d').value).getTime();if(isNaN(t)||t>Date.now()){$('#err').textContent='Bitte ein gültiges Datum (nicht in der Zukunft) wählen.';return}
+  const n=x=>parseFloat(String(x).replace(',','.'))||0;
+  S={habit:$('#h').value,start:t,price:n($('#p').value),units:n($('#u').value),reasons:$('#r').value.split('\n').map(x=>x.trim()).filter(Boolean),attempts:[]};save();show('home')}}
+function home(){
+ const g=new Date().getHours()<12?'Guten Morgen':new Date().getHours()<18?'Guten Tag':'Guten Abend';
+ A.innerHTML=`<h1>${g} 👋</h1><div class="card"><h2>Dein Leben ohne ${esc(S.habit.split(' /')[0])}</h2><div class="grid" id="t"></div></div>
+ <div class="card"><h2>Fortschritt</h2><p class="big" id="ct"></p><p class="mut" id="lg"></p></div>
+ <div class="card"><h2>Gespartes Geld</h2><p class="big" id="sv"></p><p class="mut" id="sv2"></p></div>
+ <div class="card"><h2>Nächster Meilenstein</h2><p id="mn"></p><div class="bar"><i id="mb"></i></div></div>
+ <div class="card"><h2>Heute</h2><p>${DAILY[new Date().getDate()%DAILY.length]}</p></div>
+ <button class="g" id="b1">Gesundheitsfortschritt</button><button class="g" id="b2">Einstellungen &amp; Backup</button>`;
+ $('#b1').onclick=()=>show('health');$('#b2').onclick=()=>show('settings');
+ const sk='af:seen:'+S.start;
+ every(()=>{const n=Date.now(),b=brk(S.start,n),v=sav(S.start,n),m=ms(S.start,n);
+  $('#t').innerHTML=Object.entries(b).map(([l,x])=>`<div class="u"><b>${['Std','Min','Sek'].includes(l)?String(x).padStart(2,'0'):x}</b><span>${l}</span></div>`).join('');
+  const tot=S.attempts.reduce((a,t)=>a+wd(t.start,t.end),0)+wd(S.start,n),lg=Math.max(wd(S.start,n),...S.attempts.map(t=>wd(t.start,t.end)));
+  $('#ct').textContent=tot+' freie Tage gesamt';$('#lg').textContent=`Längste Serie: ${lg} Tage · Versuche: ${S.attempts.length+1}`;
+  $('#sv').textContent=eur(v.total);$('#sv2').textContent=`Heute ${eur(v.today)} · Woche ${eur(v.week)} · Monat ${eur(v.month)} · Jahr (Hochrechnung) ${eur(v.year)}`;
+  $('#mn').innerHTML=m.next?`<b>${msLabel(m.next)}</b>`:'Alle Meilensteine erreicht! 🎉';$('#mb').style.width=Math.round(m.p*100)+'%';
+  let seen=localStorage.getItem(sk);if(seen===null){localStorage.setItem(sk,m.reached.length);return}
+  if(m.reached.length>+seen&&!$('.pop')){const x=m.reached[m.reached.length-1],p=document.createElement('div');p.className='pop';
+   p.innerHTML=`<div><div style="font-size:64px">🏆</div><h1>${msLabel(x)} geschafft!</h1><p class="mut">Tippe zum Fortfahren</p></div>`;
+   p.onclick=()=>{localStorage.setItem(sk,m.reached.length);p.remove()};document.body.appendChild(p)}},1000)}
+function sos(){
+ A.innerHTML=`<button class="g" id="bk">← Zurück</button><h1>Du schaffst das.</h1>${S.reasons.length?`<div class="card"><h2>Dein Grund</h2><p class="big" id="rs"></p></div>`:''}
+ <div class="row"><button data-t="tips">Soforthilfe</button><button data-t="breath">Atmen</button><button data-t="timer">5-Min-Timer</button></div><div id="tab"></div>`;
+ $('#bk').onclick=()=>show('home');
+ const tab=t=>{clear();let i=0;if(S.reasons.length)every(()=>{$('#rs').textContent=S.reasons[i++%S.reasons.length]},6000);
+  document.querySelectorAll('[data-t]').forEach(b=>b.className=b.dataset.t===t?'':'g');({tips,breath,timer})[t]()};
+ document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>tab(b.dataset.t));tab('tips')}
+function tips(){$('#tab').innerHTML=`<div class="card">${TIPS.map(t=>`<p>✓ ${t}</p>`).join('')}</div>`}
+function breath(){$('#tab').innerHTML=`<div class="card" style="text-align:center"><div class="orb" id="o"></div><p class="mut">4 s ein · 4 s halten · 6 s aus</p></div>`;
+ const P=[['Einatmen',4,1.4],['Halten',4,1.4],['Ausatmen',6,1]],o=$('#o');
+ (function l(i){const[p,s,sc]=P[i];o.style.transition=`transform ${s}s ease-in-out`;o.style.transform=`scale(${sc})`;o.textContent=p;T.push(setTimeout(()=>l((i+1)%3),s*1000))})(0)}
+function timer(){$('#tab').innerHTML=`<div class="card" style="text-align:center"><p class="big" id="c">05:00</p><p id="m">Starte den Timer und überstehe die Welle.</p><button id="st">Timer starten</button></div>`;
+ $('#st').onclick=()=>{$('#st').hidden=true;const end=Date.now()+3e5;
+  every(()=>{const l=Math.max(0,Math.ceil((end-Date.now())/1000));$('#c').textContent=String(Math.floor(l/60)).padStart(2,'0')+':'+String(l%60).padStart(2,'0');
+   if(l===0){clear();$('#m').innerHTML='🎉 Geschafft! Das Verlangen ist vorbei.';$('#st').textContent='Zurück zum Dashboard';$('#st').hidden=false;$('#st').onclick=()=>show('home')}
+   else $('#m').textContent=MSGS[Math.min(MSGS.length-1,Math.floor((3e5-l*1000)/3e5*MSGS.length))]},250)}}
+function health(){const h=(Date.now()-S.start)/36e5;
+ A.innerHTML=`<button class="g" id="bk">← Zurück</button><h1>Gesundheitsfortschritt</h1><p class="mut">Hinweis: Die gut belegten Daten stammen überwiegend aus der Raucherforschung. Keine medizinische Beratung.</p>`+HEALTH.map(x=>`<div class="card" style="opacity:${h>=x[0]?1:.5}"><p>${h>=x[0]?'✅':'🔒'} ${x[1]}</p><p class="mut">Einordnung: ${x[2]}</p></div>`).join('');$('#bk').onclick=()=>show('home')}
+function settings(){
+ A.innerHTML=`<button class="g" id="bk">← Zurück</button><h1>Einstellungen</h1>
+ <div class="card"><h2>Rückfall</h2><p class="mut">Ein Rückfall ist kein Versagen. Deine bisherigen Tage bleiben gespeichert, nur die aktuelle Serie startet neu.</p><button class="g" id="rl">Serie neu starten</button></div>
+ <div class="card"><h2>Backup</h2><button id="ex">Backup exportieren</button><input type="file" id="im" accept="application/json"><p class="mut" id="ms"></p></div>
+ <div class="card"><h2>Daten löschen</h2><button class="g" id="dl">Alles löschen</button></div>`;
+ $('#bk').onclick=()=>show('home');
+ $('#rl').onclick=()=>{if(confirm('Serie neu starten? Deine Gesamttage bleiben erhalten.')){const n=Date.now();S.attempts.push({start:S.start,end:n});S.start=n;save();show('home')}};
+ $('#ex').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({app:'addiction-freedom',version:1,data:S},null,2)],{type:'application/json'}));a.download='freedom-backup.json';a.click()};
+ $('#im').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());if(o.app!=='addiction-freedom'||typeof o.data.start!=='number')throw 0;S=o.data;save();$('#ms').textContent='Import erfolgreich.'}catch{$('#ms').textContent='Ungültige Datei.'}};
+ $('#dl').onclick=()=>{if(confirm('Alle Daten unwiderruflich löschen?')){S=null;save();show('onb')}}}
+show(S?'home':'onb');
+</script></body></html>
